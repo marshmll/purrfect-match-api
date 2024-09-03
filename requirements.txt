@@ -1,0 +1,9 @@
+annotated-types==0.7.0
+click==8.1.7
+greenlet==3.0.3
+h11==0.14.0
+pydantic==2.8.2
+pydantic_core==2.20.1
+SQLAlchemy==2.0.33
+typing_extensions==4.12.2
+uvicorn==0.30.6
