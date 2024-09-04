@@ -22,14 +22,16 @@ class User(Base):
     )
 
     preferences : Mapped[Set["Preference"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     adoptions : Mapped[Optional[Set["Adoption"]]] = relationship(
-        back_populates="cat", cascade="all, delete-orphan",
+        back_populates="cat",
+        cascade="all, delete-orphan",
     )
 
-    rescues : Mapped[Set["Rescue"]] = relationship(back_populates="user")
+    rescues : Mapped[Optional[Set["Rescue"]]] = relationship(back_populates="user")
 
     def __repr__(self):
         return f"""
@@ -45,8 +47,9 @@ class User(Base):
         )
         """
 
+
 class Cat(Base):
-    __tablename__ = "cat"
+    __tablename__ = "cats"
 
     id : Mapped[int] = mapped_column(Integer, primary_key=True)
     name : Mapped[str] = mapped_column(String(50))
@@ -83,39 +86,6 @@ class Cat(Base):
         )
         """
 
-class CatDisease(Base):
-    __tablename__ = "cat_diseases"
-
-    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
-    disease_id : Mapped[int] = mapped_column(ForeignKey("diseases.id"), primary_key=True)
-
-    cat : Mapped["Cat"] = relationship(back_populates="cat_diseases")
-    disease : Mapped["Disease"] = relationship(back_populates="cat_diseases")
-
-    def __repr__(self):
-        return f"""
-        CatDisease (
-            cat_id={self.cat_id!r},
-            disease_id={self.disease_id!r}
-        )
-        """
-
-class CatColor(Base):
-    __tablename__ = "cat_colors"
-
-    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
-    color_id : Mapped[int] = mapped_column(ForeignKey("colors.id"), primary_key=True)
-
-    cat : Mapped["Cat"] = relationship(back_populates="cat_colors")
-    color : Mapped["Color"] = relationship(back_populates="cat_colors")
-
-    def __repr__(self):
-        return f"""
-        CatColor (
-            cat_id={self.cat_id!r},
-            color_id={self.color_id!r}
-        )
-        """
 
 class Disease(Base):
     __tablename__ = "diseases"
@@ -138,26 +108,7 @@ class Disease(Base):
             description={self.description!r}
         )
         """
-    
-class Vaccine(Base):
-    __tablename__ = "vaccines"
 
-    id : Mapped[int] = mapped_column(Integer, primary_key=True)
-    name : Mapped[str] = mapped_column(String(50))
-    description : Mapped[Optional[str]] = mapped_column(String(1024))
-    disease_id : Mapped[int] = mapped_column(ForeignKey("diseases.id"))
-
-    diseases : Mapped[Set["Disease"]] = relationship(back_populates="vaccine")
-
-    def __repr__(self):
-        return f"""
-        Vaccine (
-            id={self.id!r},
-            name={self.name!r},
-            description={self.description!r},
-            disease_id={self.disease_id!r}
-        )
-        """
 
 class Personality(Base):
     __tablename__ = "personalities"
@@ -167,7 +118,7 @@ class Personality(Base):
     description : Mapped[str] = mapped_column(String(1024))
 
     personality_preferences : Mapped[Optional[Set["PersonalityPreference"]]] = relationship(
-        back_populates="personality", cascade="all delete-orphan",
+        back_populates="personality", cascade="all, delete-orphan",
     )
 
     def __repr__(self):
@@ -178,6 +129,7 @@ class Personality(Base):
             description={self.description!r}
         )
         """
+
 
 class Color(Base):
     __tablename__ = "colors"
@@ -202,19 +154,71 @@ class Color(Base):
         )
         """
 
+
+class CatDisease(Base):
+    __tablename__ = "cat_diseases"
+
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
+    disease_id : Mapped[int] = mapped_column(ForeignKey("diseases.id"), primary_key=True)
+
+    cat : Mapped["Cat"] = relationship(back_populates="cat_diseases")
+    disease : Mapped["Disease"] = relationship(back_populates="cat_diseases")
+
+    def __repr__(self):
+        return f"""
+        CatDisease (
+            cat_id={self.cat_id!r},
+            disease_id={self.disease_id!r}
+        )
+        """
+
+
+class CatColor(Base):
+    __tablename__ = "cat_colors"
+
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
+    color_id : Mapped[int] = mapped_column(ForeignKey("colors.id"), primary_key=True)
+
+    cat : Mapped["Cat"] = relationship(back_populates="cat_colors")
+    color : Mapped["Color"] = relationship(back_populates="cat_colors")
+
+    def __repr__(self):
+        return f"""
+        CatColor (
+            cat_id={self.cat_id!r},
+            color_id={self.color_id!r}
+        )
+        """
+
+
+class Vaccine(Base):
+    __tablename__ = "vaccines"
+
+    id : Mapped[int] = mapped_column(Integer, primary_key=True)
+    name : Mapped[str] = mapped_column(String(50))
+    description : Mapped[Optional[str]] = mapped_column(String(1024))
+    disease_id : Mapped[int] = mapped_column(ForeignKey("diseases.id"))
+
+    diseases : Mapped[Set["Disease"]] = relationship(back_populates="vaccine")
+
+    def __repr__(self):
+        return f"""
+        Vaccine (
+            id={self.id!r},
+            name={self.name!r},
+            description={self.description!r},
+            disease_id={self.disease_id!r}
+        )
+        """
+
+
 class Preference(Base):
     __abstract__ = True # Abstract Class
 
     id : Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id : Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
     choice_datetime : Mapped[datetime] = mapped_column(DateTime)
     type : Mapped[str]
-
-    __mapper_args__ = {
-        "polymorphic-on": "type",
-    }
-
-    user : Mapped["User"] = relationship(back_populate="preferences")
 
 
 class ColorPreference(Preference):
@@ -222,11 +226,8 @@ class ColorPreference(Preference):
 
     color_id : Mapped[int] = mapped_column(ForeignKey("colors.id"), primary_key=True)
 
+    user : Mapped["User"] = relationship(back_populates="preferences")
     color : Mapped["Color"] = relationship(back_populates="color_preferences")
-
-    __mapper_args__ = {
-        "polymorphic-identity": "color_preference",
-    }
 
     def __repr__(self):
         return f"""
@@ -239,16 +240,14 @@ class ColorPreference(Preference):
         )
         """
     
+
 class PersonalityPreference(Preference):
     __tablename__ = "personality_preferences"
 
     personality_id : Mapped[int] = mapped_column(ForeignKey("personalities.id"), primary_key=True)
 
+    user : Mapped["User"] = relationship(back_populates="preferences")
     personality : Mapped["Personality"] = relationship(back_populates="personality_preferences")
-
-    __mapper_args__ = {
-        "polymorphic-identity": "personality_preference",
-    }
 
     def __repr__(self):
         return f"""
@@ -261,11 +260,12 @@ class PersonalityPreference(Preference):
         )
         """
 
+
 class Rescue(Base):
     __tablename__ = "rescues"
 
-    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
-    request_datetime : Mapped[datetime] = mapped_column(DateTime)
+    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    request_datetime : Mapped[datetime] = mapped_column(DateTime, primary_key=True)
     status : Mapped[str] = mapped_column(String(50))
     description : Mapped[str] = mapped_column(String(1024))
     addr_city : Mapped[str] = mapped_column(String(50))
@@ -288,12 +288,13 @@ class Rescue(Base):
             addr_zipcode={self.addr_zipcode!r}
         )
         """
-    
+
+
 class Adoption(Base):
     __tablename__ = "adoptions"
 
-    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
-    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"))
+    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
     request_datetime : Mapped[datetime] = mapped_column(DateTime)
     hand_over_datetime : Mapped[Optional[datetime]] = mapped_column(DateTime)
     status : Mapped[str] = mapped_column(String(20))
@@ -311,6 +312,43 @@ class Adoption(Base):
             status={self.status!r}
         )
         """
+
+
+class PhysicalDescription(Base):
+    __tablename__ = "physical_description"
+
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
+    description : Mapped[str] = mapped_column(String(1024))
+
+    cat : Mapped["Cat"] = relationship(back_populates="physical_description")
+
+    def __repr__(self):
+        return f"""
+        PhysicalDescription (
+            cat_id={self.cat_id!r},
+            description={self.description!r}
+        )
+        """
+    
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    sender_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    receiver_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    sent_datetime : Mapped[datetime] = mapped_column(DateTime, primary_key=True)
+    content : Mapped[str] = mapped_column(String(2000))
+
+    def __repr__(self):
+        return f"""
+        Message (
+            sender_id={self.sender_id!r},
+            receiver_id={self.receiver_id!r},
+            content={self.content!r},
+            sent_datetime={self.sent_datetime!r}
+        )
+        """
+
 
 class Vaccination(Base):
     __tablename__ = "vaccinations"
@@ -332,39 +370,5 @@ class Vaccination(Base):
             dose={self.dose!r},
             appl_datetime={self.appl_datetime!r},
             next_datetime={self.next_datetime!r}
-        )
-        """
-
-class PhysicalDescription(Base):
-    __tablename__ = "physical_description"
-
-    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
-    description : Mapped[str] = mapped_column(String(1024))
-
-    cat : Mapped["Cat"] = relationship(back_populates="physical_description")
-
-    def __repr__(self):
-        return f"""
-        PhysicalDescription (
-            cat_id={self.cat_id!r},
-            description={self.description!r}
-        )
-        """
-    
-class Message(Base):
-    __tablename__ = "messages"
-
-    sender_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
-    receiver_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
-    content : Mapped[str] = mapped_column(String(2000))
-    sent_datetime : Mapped[datetime] = mapped_column(DateTime)
-
-    def __repr__(self):
-        return f"""
-        Message (
-            sender_id={self.sender_id!r},
-            receiver_id={self.receiver_id!r},
-            content={self.content!r},
-            sent_datetime={self.sent_datetime!r}
         )
         """
