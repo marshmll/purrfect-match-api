@@ -10,8 +10,9 @@ class User(Base):
 
     id : Mapped[int] = mapped_column(Integer, primary_key=True)
     name : Mapped[str] = mapped_column(String(100))
-    username : Mapped[str] = mapped_column(String)
+    username : Mapped[str] = mapped_column(String(20))
     date_birth : Mapped[date] = mapped_column(Date)
+    datetime_register : Mapped[date] = mapped_column(DateTime)
     pass_hash : Mapped[str] = mapped_column(CHAR(64))
     role : Mapped[str] = mapped_column(String(10))
     contact_email : Mapped[Optional[str]] = mapped_column(String(50))
@@ -21,13 +22,18 @@ class User(Base):
         UniqueConstraint("username"),
     )
 
-    preferences : Mapped[Set["Preference"]] = relationship(
+    color_preferences : Mapped[Optional[Set["ColorPreference"]]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    personality_preferences : Mapped[Optional[Set["PersonalityPreference"]]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
 
     adoptions : Mapped[Optional[Set["Adoption"]]] = relationship(
-        back_populates="cat",
+        back_populates="user",
         cascade="all, delete-orphan",
     )
 
@@ -200,6 +206,7 @@ class Vaccine(Base):
     disease_id : Mapped[int] = mapped_column(ForeignKey("diseases.id"))
 
     diseases : Mapped[Set["Disease"]] = relationship(back_populates="vaccine")
+    vaccinations : Mapped[Optional[Set["Vaccination"]]] = relationship(back_populates="vaccine")
 
     def __repr__(self):
         return f"""
@@ -218,7 +225,6 @@ class Preference(Base):
     id : Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
     choice_datetime : Mapped[datetime] = mapped_column(DateTime)
-    type : Mapped[str]
 
 
 class ColorPreference(Preference):
@@ -226,7 +232,7 @@ class ColorPreference(Preference):
 
     color_id : Mapped[int] = mapped_column(ForeignKey("colors.id"), primary_key=True)
 
-    user : Mapped["User"] = relationship(back_populates="preferences")
+    user : Mapped["User"] = relationship(back_populates="color_preferences")
     color : Mapped["Color"] = relationship(back_populates="color_preferences")
 
     def __repr__(self):
@@ -246,7 +252,7 @@ class PersonalityPreference(Preference):
 
     personality_id : Mapped[int] = mapped_column(ForeignKey("personalities.id"), primary_key=True)
 
-    user : Mapped["User"] = relationship(back_populates="preferences")
+    user : Mapped["User"] = relationship(back_populates="personality_preferences")
     personality : Mapped["Personality"] = relationship(back_populates="personality_preferences")
 
     def __repr__(self):
