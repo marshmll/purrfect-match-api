@@ -21,8 +21,12 @@ class User(Base):
         UniqueConstraint("username"),
     )
 
-    user_preferences : Mapped[Set["UserPreference"]] = relationship(
+    preferences : Mapped[Set["Preference"]] = relationship(
         back_populates="user", cascade="all, delete-orphan",
+    )
+
+    adoptions : Mapped[Optional[Set["Adoption"]]] = relationship(
+        back_populates="cat", cascade="all, delete-orphan",
     )
 
     rescues : Mapped[Set["Rescue"]] = relationship(back_populates="user")
@@ -42,12 +46,32 @@ class User(Base):
         """
 
 class Cat(Base):
-    __tablename__ = "cats"
+    __tablename__ = "cat"
 
     id : Mapped[int] = mapped_column(Integer, primary_key=True)
     name : Mapped[str] = mapped_column(String(50))
     age : Mapped[int] = mapped_column(SmallInteger)
     sex : Mapped[str] = mapped_column(CHAR(1))
+
+    adoption : Mapped[Optional["Adoption"]] = relationship(
+        back_populates="cat", cascade="all, delete-orphan",
+    )
+
+    vaccinations : Mapped[Optional[Set["Vaccination"]]] = relationship(
+        back_populates="cat", cascade="all, delete-orphan",
+    )
+
+    cat_diseases : Mapped[Optional[Set["CatDisease"]]] = relationship(
+        back_populates="cat", cascade="all, delete-orphan",
+    )
+
+    cat_colors : Mapped[Optional[Set["CatColor"]]] = relationship(
+        back_populates="cat", cascade="all, delete-orphan",
+    )
+
+    physical_description : Mapped["PhysicalDescription"] = relationship(
+        back_populates="cat", cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"""
@@ -59,6 +83,40 @@ class Cat(Base):
         )
         """
 
+class CatDisease(Base):
+    __tablename__ = "cat_diseases"
+
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
+    disease_id : Mapped[int] = mapped_column(ForeignKey("diseases.id"), primary_key=True)
+
+    cat : Mapped["Cat"] = relationship(back_populates="cat_diseases")
+    disease : Mapped["Disease"] = relationship(back_populates="cat_diseases")
+
+    def __repr__(self):
+        return f"""
+        CatDisease (
+            cat_id={self.cat_id!r},
+            disease_id={self.disease_id!r}
+        )
+        """
+
+class CatColor(Base):
+    __tablename__ = "cat_colors"
+
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
+    color_id : Mapped[int] = mapped_column(ForeignKey("colors.id"), primary_key=True)
+
+    cat : Mapped["Cat"] = relationship(back_populates="cat_colors")
+    color : Mapped["Color"] = relationship(back_populates="cat_colors")
+
+    def __repr__(self):
+        return f"""
+        CatColor (
+            cat_id={self.cat_id!r},
+            color_id={self.color_id!r}
+        )
+        """
+
 class Disease(Base):
     __tablename__ = "diseases"
 
@@ -67,6 +125,10 @@ class Disease(Base):
     description : Mapped[Optional[str]] = mapped_column(String(1024))
 
     vaccine : Mapped[Optional["Vaccine"]] = relationship(back_populates="diseases")
+    cat_diseases : Mapped[Optional[Set["CatDisease"]]] = relationship(
+        back_populates="disease",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"""
@@ -104,7 +166,7 @@ class Personality(Base):
     name : Mapped[str] = mapped_column(String(30))
     description : Mapped[str] = mapped_column(String(1024))
 
-    user_preferences : Mapped[Optional[Set["UserPreference"]]] = relationship(
+    personality_preferences : Mapped[Optional[Set["PersonalityPreference"]]] = relationship(
         back_populates="personality", cascade="all delete-orphan",
     )
 
@@ -123,9 +185,13 @@ class Color(Base):
     id : Mapped[int] = mapped_column(Integer, primary_key=True)
     name : Mapped[str] = mapped_column(String(10))
 
-    user_preferences : Mapped[Optional[Set["UserPreference"]]] = relationship(
-        back_populates="cat_color",
+    color_preferences : Mapped[Optional[Set["ColorPreference"]]] = relationship(
+        back_populates="color",
         cascade="all, delete-orphan",    
+    )
+
+    cat_colors : Mapped[Optional[Set["CatColor"]]] = relationship(
+        back_populates="color", cascade="all, delete-orphan"
     )
 
     def __repr__(self):
@@ -136,28 +202,62 @@ class Color(Base):
         )
         """
 
-class UserPreference(Base):
-    __tablename__ = "user_preferences"
+class Preference(Base):
+    __abstract__ = True # Abstract Class
 
-    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
-    color_id : Mapped[int] = mapped_column(ForeignKey("cat_colors.id"))
-    personality_id : Mapped[int] = mapped_column(ForeignKey("personalities.id"))
-    age : Mapped[Optional[int]] = mapped_column(SmallInteger)
+    id : Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id : Mapped[int] = mapped_column(ForeignKey("user.id"))
+    choice_datetime : Mapped[datetime] = mapped_column(DateTime)
+    type : Mapped[str]
 
-    user : Mapped["User"] = relationship(back_populates="user_preferences")
-    color : Mapped["Color"] = relationship(back_populates="user_preferences")
+    __mapper_args__ = {
+        "polymorphic-on": "type",
+    }
 
-    personality : Mapped["Personality"] = relationship(
-        back_populates="preferences",
-    )
+    user : Mapped["User"] = relationship(back_populate="preferences")
+
+
+class ColorPreference(Preference):
+    __tablename__ = "color_preferences"
+
+    color_id : Mapped[int] = mapped_column(ForeignKey("colors.id"), primary_key=True)
+
+    color : Mapped["Color"] = relationship(back_populates="color_preferences")
+
+    __mapper_args__ = {
+        "polymorphic-identity": "color_preference",
+    }
 
     def __repr__(self):
         return f"""
-        UserPreference (
+        ColorPreference (
+            id={self.id!r}
             user_id={self.user_id!r},
-            color_id={self.color_id!r},
-            personality_id={self.personality_id},
-            age={self.age!r}
+            choice_datetime={self.choice_datetime!r},
+            type={self.type!r}
+            color_id={self.color_id!r}
+        )
+        """
+    
+class PersonalityPreference(Preference):
+    __tablename__ = "personality_preferences"
+
+    personality_id : Mapped[int] = mapped_column(ForeignKey("personalities.id"), primary_key=True)
+
+    personality : Mapped["Personality"] = relationship(back_populates="personality_preferences")
+
+    __mapper_args__ = {
+        "polymorphic-identity": "personality_preference",
+    }
+
+    def __repr__(self):
+        return f"""
+        PersonalityPreference (
+            id={self.id!r}
+            user_id={self.user_id!r},
+            choice_datetime={self.choice_datetime!r},
+            type={self.type!r}
+            personality_id={self.personality_id!r},
         )
         """
 
@@ -186,5 +286,85 @@ class Rescue(Base):
             addr_state={self.addr_state!r},
             addr_number={self.addr_number!r},
             addr_zipcode={self.addr_zipcode!r}
+        )
+        """
+    
+class Adoption(Base):
+    __tablename__ = "adoptions"
+
+    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"))
+    request_datetime : Mapped[datetime] = mapped_column(DateTime)
+    hand_over_datetime : Mapped[Optional[datetime]] = mapped_column(DateTime)
+    status : Mapped[str] = mapped_column(String(20))
+
+    user : Mapped["User"] = relationship(back_populates="adoptions")
+    cat : Mapped["Cat"] = relationship(back_populates="adoption")
+
+    def __repr__(self):
+        return f"""
+        Adoption (
+            user_id={self.user_id!r},
+            cat_id={self.cat_id!r},
+            request_datetime={self.request_datetime!r},
+            hand_over_datetime={self.hand_over_datetime!r},
+            status={self.status!r}
+        )
+        """
+
+class Vaccination(Base):
+    __tablename__ = "vaccinations"
+
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
+    vaccine_id : Mapped[int] = mapped_column(ForeignKey("vaccines.id"), primary_key=True)
+    dose : Mapped[str] = mapped_column(CHAR(3))
+    appl_datetime : Mapped[datetime] = mapped_column(DateTime)
+    next_datetime : Mapped[Optional[datetime]] = mapped_column(DateTime)
+    
+    cat : Mapped["Cat"] = relationship(back_populates="vaccinations")
+    vaccine : Mapped["Vaccine"] = relationship(back_populates="vaccinations")
+
+    def __repr__(self):
+        return f"""
+        Vaccination (
+            cat_id={self.cat_id!r},
+            vaccine_id={self.vaccine_id!r},
+            dose={self.dose!r},
+            appl_datetime={self.appl_datetime!r},
+            next_datetime={self.next_datetime!r}
+        )
+        """
+
+class PhysicalDescription(Base):
+    __tablename__ = "physical_description"
+
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
+    description : Mapped[str] = mapped_column(String(1024))
+
+    cat : Mapped["Cat"] = relationship(back_populates="physical_description")
+
+    def __repr__(self):
+        return f"""
+        PhysicalDescription (
+            cat_id={self.cat_id!r},
+            description={self.description!r}
+        )
+        """
+    
+class Message(Base):
+    __tablename__ = "messages"
+
+    sender_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
+    receiver_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
+    content : Mapped[str] = mapped_column(String(2000))
+    sent_datetime : Mapped[datetime] = mapped_column(DateTime)
+
+    def __repr__(self):
+        return f"""
+        Message (
+            sender_id={self.sender_id!r},
+            receiver_id={self.receiver_id!r},
+            content={self.content!r},
+            sent_datetime={self.sent_datetime!r}
         )
         """
