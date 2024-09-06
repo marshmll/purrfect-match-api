@@ -13,6 +13,7 @@ class User(Base):
     username : Mapped[str] = mapped_column(String(20))
     date_birth : Mapped[date] = mapped_column(Date)
     datetime_register : Mapped[date] = mapped_column(DateTime)
+    pass_salt : Mapped[str] = mapped_column(CHAR(16))
     pass_hash : Mapped[str] = mapped_column(CHAR(64))
     role : Mapped[str] = mapped_column(String(10))
     contact_email : Mapped[Optional[str]] = mapped_column(String(50))
@@ -46,6 +47,7 @@ class User(Base):
             name={self.name!r},
             username={self.username!r},
             date_birth={self.date_birth},
+            pass_salt={self.pass_salt!r},
             pass_hash={self.pass_hash!r},
             role={self.role!r},
             contact_email={self.contact_email!r},
