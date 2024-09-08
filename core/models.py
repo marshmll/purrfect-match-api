@@ -40,6 +40,9 @@ class User(Base):
 
     rescues : Mapped[Optional[Set["Rescue"]]] = relationship(back_populates="user")
 
+    sent_messages : Mapped[Optional[Set["Message"]]] = relationship(back_populates="sender")
+    received_messages : Mapped[Optional[Set["Message"]]] = relationship(back_populates="receiver")
+
     def __repr__(self):
         return f"""
         User (
@@ -76,7 +79,11 @@ class Cat(Base):
         back_populates="cat", cascade="all, delete-orphan",
     )
 
-    cat_colors : Mapped[Optional[Set["CatColor"]]] = relationship(
+    cat_colors : Mapped[Set["CatColor"]] = relationship(
+        back_populates="cat", cascade="all, delete-orphan",
+    )
+
+    cat_personalities : Mapped[Set["CatPersonality"]] = relationship(
         back_populates="cat", cascade="all, delete-orphan",
     )
 
@@ -126,6 +133,10 @@ class Personality(Base):
     description : Mapped[str] = mapped_column(String(1024))
 
     personality_preferences : Mapped[Optional[Set["PersonalityPreference"]]] = relationship(
+        back_populates="personality", cascade="all, delete-orphan",
+    )
+
+    cat_personalities : Mapped[Optional[Set["CatPersonality"]]] = relationship(
         back_populates="personality", cascade="all, delete-orphan",
     )
 
@@ -195,6 +206,29 @@ class CatColor(Base):
         CatColor (
             cat_id={self.cat_id!r},
             color_id={self.color_id!r}
+        )
+        """
+
+
+class CatPersonality(Base):
+    __tablename__ = "cat_personalities"
+
+    cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
+    personality_id : Mapped[int] = mapped_column(ForeignKey("personalities.id"), primary_key=True)
+
+    cat : Mapped["Cat"] = relationship(
+        back_populates="cat_personalities",
+    )
+
+    personality : Mapped["Personality"] = relationship(
+        back_populates="cat_personalities",
+    )
+
+    def __repr__(self):
+        return f"""
+        CatPersonality (
+            cat_id={self.cat_id!r},
+            personality_id={self.personality_id!r}
         )
         """
 
@@ -274,7 +308,7 @@ class Rescue(Base):
     user_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     request_datetime : Mapped[datetime] = mapped_column(DateTime, primary_key=True)
     status : Mapped[str] = mapped_column(String(50))
-    closure_datetime : Mapped[Optional[int]] = mapped_column(SmallInt)
+    closure_datetime : Mapped[Optional[int]] = mapped_column(SmallInteger)
     description : Mapped[str] = mapped_column(String(1024))
     addr_city : Mapped[str] = mapped_column(String(50))
     addr_state : Mapped[str] = mapped_column(String(100))
@@ -347,6 +381,10 @@ class Message(Base):
     receiver_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     sent_datetime : Mapped[datetime] = mapped_column(DateTime, primary_key=True)
     content : Mapped[str] = mapped_column(String(2000))
+    status : Mapped[str] = mapped_column(String(20))
+
+    sender : Mapped["User"] = relationship(back_populates="sent_messages")
+    receiver : Mapped["User"] = relationship(back_populates="received_messages")
 
     def __repr__(self):
         return f"""
