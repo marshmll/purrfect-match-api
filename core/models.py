@@ -259,7 +259,6 @@ class Preference(Base):
     __abstract__ = True # Abstract Class
 
     user_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
-    choice_datetime : Mapped[datetime] = mapped_column(DateTime)
 
 
 class ColorPreference(Preference):
