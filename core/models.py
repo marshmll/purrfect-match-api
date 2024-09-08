@@ -224,8 +224,7 @@ class Vaccine(Base):
 class Preference(Base):
     __abstract__ = True # Abstract Class
 
-    id : Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     choice_datetime : Mapped[datetime] = mapped_column(DateTime)
 
 
@@ -275,11 +274,13 @@ class Rescue(Base):
     user_id : Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
     request_datetime : Mapped[datetime] = mapped_column(DateTime, primary_key=True)
     status : Mapped[str] = mapped_column(String(50))
+    closure_datetime : Mapped[Optional[int]] = mapped_column(SmallInt)
     description : Mapped[str] = mapped_column(String(1024))
     addr_city : Mapped[str] = mapped_column(String(50))
     addr_state : Mapped[str] = mapped_column(String(100))
+    addr_street : Mapped[str] = mapped_column(String(100))
     addr_number : Mapped[int] = mapped_column(Integer)
-    addr_zipcode : Mapped[str] = mapped_column(CHAR(8))
+    addr_zipcode : Mapped[str] = mapped_column(CHAR(8)) # CEP
 
     user : Mapped["User"] = relationship(back_populates="rescues")
 
@@ -364,8 +365,8 @@ class Vaccination(Base):
     cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
     vaccine_id : Mapped[int] = mapped_column(ForeignKey("vaccines.id"), primary_key=True)
     dose : Mapped[str] = mapped_column(CHAR(3))
-    appl_datetime : Mapped[datetime] = mapped_column(DateTime)
-    next_datetime : Mapped[Optional[datetime]] = mapped_column(DateTime)
+    appl_date : Mapped[date] = mapped_column(Date)
+    next_date : Mapped[Optional[date]] = mapped_column(Date)
     
     cat : Mapped["Cat"] = relationship(back_populates="vaccinations")
     vaccine : Mapped["Vaccine"] = relationship(back_populates="vaccinations")
