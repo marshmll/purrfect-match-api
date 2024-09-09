@@ -67,7 +67,7 @@ def get_user(id: int, db: Session = Depends(get_db)):
 
     if not res:
         raise HTTPException(status_code=404, detail="Usuário não encontrado no banco de dados.")
-    return
+    return res
 
 @app.get("/user/me/", response_model=schemas.User)
 def read_users_me(current_user: Annotated[models.User, Depends(get_current_user)]):

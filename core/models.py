@@ -40,9 +40,6 @@ class User(Base):
 
     rescues : Mapped[Optional[Set["Rescue"]]] = relationship(back_populates="user")
 
-    sent_messages : Mapped[Optional[Set["Message"]]] = relationship(back_populates="sender")
-    received_messages : Mapped[Optional[Set["Message"]]] = relationship(back_populates="receiver")
-
     def __repr__(self):
         return f"""
         User (
@@ -382,8 +379,8 @@ class Message(Base):
     content : Mapped[str] = mapped_column(String(2000))
     status : Mapped[str] = mapped_column(String(20))
 
-    sender : Mapped["User"] = relationship(back_populates="sent_messages")
-    receiver : Mapped["User"] = relationship(back_populates="received_messages")
+    sender : Mapped["User"] = relationship(backref="sent_messages", foreign_keys=[sender_id])
+    receiver : Mapped["User"] = relationship(backref="received_messages", foreign_keys=[receiver_id])
 
     def __repr__(self):
         return f"""
