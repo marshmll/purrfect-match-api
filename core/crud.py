@@ -31,10 +31,14 @@ def authenticate_user(username: str, password: str, db: Session):
 # USER ============================================================================================
 
 def get_user_by_id(db: Session, id: int):
-    return db.query(models.User).filter(models.User.id == id).first()
+    user = db.query(models.User).filter(models.User.id == id).first()
+    print(user)
+    return user
 
 def get_user_by_username(db: Session, username: str):
-    return db.query(models.User).filter(models.User.username == username).first()
+    user = db.query(models.User).filter(models.User.username == username).first()
+    print(user)
+    return user
 
 def create_user(db: Session, user: schemas.UserCreate):
     salt = security.gen_salt()
@@ -52,16 +56,23 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+    print(db_user)
 
     return db_user
 
 # CAT =============================================================================================
 
 def get_cat_by_id(db: Session, id: int):
-    return db.query(models.Cat).filter(models.Cat.id == id).first()
+    cat = db.query(models.Cat).filter(models.Cat.id == id).first()
+    print(cat)
+
+    return cat
 
 def get_cat_by_name(db: Session, name: str):
-    return db.query(models.Cat).filter(models.Cat.name == name).first()
+    cat = db.query(models.Cat).filter(models.Cat.name == name).first()
+    print(cat)
+    
+    return cat
 
 def create_cat(db: Session, cat: schemas.CatCreate):
     db_cat = models.Cat (
@@ -72,5 +83,6 @@ def create_cat(db: Session, cat: schemas.CatCreate):
     db.add(db_cat)
     db.commit()
     db.refresh(db_cat)
-
+    print(db_cat)
+    
     return db_cat

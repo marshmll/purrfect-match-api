@@ -357,7 +357,7 @@ class Adoption(Base):
 
 
 class PhysicalDescription(Base):
-    __tablename__ = "physical_description"
+    __tablename__ = "physical_descriptions"
 
     cat_id : Mapped[int] = mapped_column(ForeignKey("cats.id"), primary_key=True)
     description : Mapped[str] = mapped_column(String(1024))
