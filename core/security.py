@@ -1,10 +1,27 @@
+from os import getenv
 from hashlib import sha256
 from secrets import token_hex
 from pydantic import BaseModel
+from fastapi import HTTPException, status
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ALGORITHM = "HS256"
-SECRET_KEY = "nope"
-AUTH_TOKEN_LIFETIME_IN_MINUTES = 30
+SECRET_KEY = getenv("JWT_KEY")
+AUTH_TOKEN_LIFETIME_IN_HOURS = 48
+
+CREDENTIALS_EXPIRATION_HTTPEXCEPTION = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Não foi possível validar as credenciais",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
+UNAUTHORIZED_HTTPEXCEPTION = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Usuário ou senha incorretos",
+    headers={"WWW-Authenticate": "Bearer"},
+)
 
 class Token(BaseModel):
     access_token: str
